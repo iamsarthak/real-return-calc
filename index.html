@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Returns Calculator</title>
+    <!-- Include Chart.js for visualizations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6da7;
+            --primary-light: #eef2ff;
+            --secondary-color: #f0f4f8;
+            --text-color: #333;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --border-color: #e5e7eb;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9fafb;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-bottom: 16px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .intro {
+            background-color: var(--primary-light);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+            gap: 8px;
+        }
+        
+        .tab-button {
+            padding: 10px 16px;
+            border: none;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .tab-button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .card {
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .result-row:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-weight: 500;
+        }
+        
+        .result-value {
+            font-weight: 600;
+        }
+        
+        .highlight {
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+        
+        .negative {
+            color: var(--error-color);
+        }
+        
+        .formula-box {
+            background-color: #fffbeb;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 24px;
+            font-size: 14px;
+        }
+        
+        .notes {
+            background-color: var(--secondary-color);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+            font-size: 14px;
+        }
+        
+        .notes h3 {
+            margin-bottom: 8px;
+        }
+        
+        .notes ul, .notes ol {
+            padding-left: 24px;
+        }
+        
+        .notes li {
+            margin-bottom: 4px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 24px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background-color: #3b5998;
+        }
+        
+        .comparison-form {
+            margin-bottom: 24px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        .positive {
+            color: var(--success-color);
+        }
+        
+        .example-table {
+            margin: 16px 0;
+        }
+        
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        
+        @media (min-width: 768px) {
+            .two-columns {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real Returns Calculator</h1>
+        
+        <div class="intro">
+            <p>This calculator shows how inflation and taxes affect your investment returns. The real return is what matters for your purchasing power.</p>
+        </div>
+        
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="calculator">Calculator</button>
+            <button class="tab-button" data-tab="visualizations">Visualizations</button>
+            <button class="tab-button" data-tab="comparison">Asset Comparison</button>
+            <button class="tab-button" data-tab="explanation">Explanation</button>
+        </div>
+        
+        <!-- Calculator Tab -->
+        <div id="calculator" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h2>Investment Parameters</h2>
+                    <form id="calculator-form">
+                        <div class="form-group">
+                            <label for="asset-class">Asset Class</label>
+                            <select id="asset-class">
+                                <!-- Will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="nominal-return">Nominal Return (%) (CAGR)</label>
+                            <input type="number" id="nominal-return" step="0.1" value="12.5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tax-rate">Tax Rate (%)</label>
+                            <input type="number" id="tax-rate" step="0.1" value="10">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="inflation-rate">Inflation Rate (%)</label>
+                            <input type="number" id="inflation-rate" step="0.1" value="5.9">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="initial-investment">Initial Investment (₹)</label>
+                            <input type="number" id="initial-investment" value="100000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="years">Investment Period (Years)</label>
+                            <input type="number" id="years" value="10">
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h2>Results</h2>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
+                        <span class="result-label" style="font-size: 18px;">Real Return (Annualized)</span>
+                        <span id="real-return" class="highlight">0.00%</span>
+                    </div>
+                    
+                    <div class="result-row">
+                        <span class="result-label">Initial Investment</span>
+                        <span class="result-value" id="init-investment-display">₹100,000</span>
+                    </div>
+                    
+                    <div class="result-row">
+                        <span class="result-label">Nominal Future Value</span>
+                        <span class="result-value" id="nominal-value">₹0</span>
+                    </div>
+                    
+                    <div class="result-row">
+                        <span class="result-label">Tax Paid</span>
+                        <span class="result-value negative" id="tax-paid">-₹0</span>
+                    </div>
+                    
+                    <div class="result-row">
+                        <span class="result-label">Post-Tax Value</span>
+                        <span class="result-value" id="post-tax-value">₹0</span>
+                    </div>
+                    
+                    <div class="result-row">
+                        <span class="result-label">Inflation Impact</span>
+                        <span class="result-value negative" id="inflation-impact">-₹0</span>
+                    </div>
+                    
+                    <div class="result-row">
+                        <span class="result-label" style="font-weight: 600;">Real Future Value</span>
+                        <span class="result-value" style="font-weight: 700;" id="real-value">₹0</span>
+                    </div>
+                    
+                    <div class="formula-box">
+                        <h3>How we calculate real return:</h3>
+                        <p>1. Calculate nominal future value: Principal × (1 + Nominal Return)^Years</p>
+                        <p>2. Deduct tax on gains: Gains × Tax Rate</p>
+                        <p>3. Adjust for inflation: Post-Tax Value ÷ (1 + Inflation Rate)^Years</p>
+                        <p>4. Calculate annual real return: (Real Value ÷ Principal)^(1/Years) - 1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visualizations Tab -->
+        <div id="visualizations" class="tab-content">
+            <div class="card">
+                <h2>Growth Visualization</h2>
+                <p class="intro">This chart shows how your investment grows over time in nominal, post-tax, and real terms.</p>
+                <div class="chart-container">
+                    <canvas id="growth-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="two-columns">
+                <div class="card">
+                    <h2>Investment Breakdown</h2>
+                    <p class="intro">This chart shows how your investment breaks down into principal, net gain, taxes paid, and inflation impact.</p>
+                    <div class="chart-container">
+                        <canvas id="breakdown-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>Return Breakdown</h2>
+                    <p class="intro">This chart shows how nominal returns are reduced by taxes and inflation.</p>
+                    <div class="chart-container">
+                        <canvas id="return-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comparison Tab -->
+        <div id="comparison" class="tab-content">
+            <div class="card">
+                <h2>Asset Comparison</h2>
+                <p class="intro">Compare your selected asset with another to see the difference in real returns.</p>
+                
+                <div class="comparison-form">
+                    <div class="form-group">
+                        <label for="comparison-asset">Compare with:</label>
+                        <select id="comparison-asset">
+                            <option value="">Select an asset</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <button id="compare-button" style="margin-top: 10px;">Compare</button>
+                </div>
+                
+                <div id="comparison-results" style="display: none;">
+                    <h3>Comparison Results</h3>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th id="current-asset-name">Current Asset</th>
+                                <th id="comparison-asset-name">Comparison Asset</th>
+                                <th>Difference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Nominal Return</td>
+                                <td id="current-nominal">0%</td>
+                                <td id="comparison-nominal">0%</td>
+                                <td id="nominal-diff">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Tax Rate</td>
+                                <td id="current-tax">0%</td>
+                                <td id="comparison-tax">0%</td>
+                                <td id="tax-diff">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Real Return</td>
+                                <td id="current-real">0%</td>
+                                <td id="comparison-real">0%</td>
+                                <td id="real-diff">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Real Future Value</td>
+                                <td id="current-real-value">₹0</td>
+                                <td id="comparison-real-value">₹0</td>
+                                <td id="real-value-diff">₹0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="chart-container" style="margin-top: 24px;">
+                        <h3>Real Return Comparison</h3>
+                        <canvas id="comparison-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Explanation Tab -->
+        <div id="explanation" class="tab-content">
+            <div class="card">
+                <h2>Understanding Real Returns</h2>
+                
+                <div style="margin-bottom: 24px;">
+                    <h3>The Two Battles Your Money Fights</h3>
+                    <p style="margin-bottom: 8px;">When investing, your money faces two major obstacles that erode your returns:</p>
+                    <ol style="padding-left: 24px;">
+                        <li><strong>Inflation:</strong> The silent wealth destroyer that reduces your purchasing power over time. An item that costs ₹100 today might cost ₹106 next year with 6% inflation.</li>
+                        <li><strong>Taxes:</strong> Taxes are levied on your nominal gains, not real gains. This means you're taxed even on the portion of returns that merely kept pace with inflation.</li>
+                    </ol>
+                </div>
+                
+                <div style="margin-bottom: 24px;">
+                    <h3>How Real Returns Are Calculated</h3>
+                    <p style="margin-bottom: 8px;">The real return calculation involves three key steps:</p>
+                    
+                    <div style="background-color: white; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 16px;">
+                        <ol style="padding-left: 24px;">
+                            <li><strong>Calculate Nominal Growth:</strong> Initial Investment × (1 + Nominal Return Rate)^Years</li>
+                            <li><strong>Account for Taxes:</strong> Tax is applied to the gains (Nominal Future Value - Initial Investment) × Tax Rate</li>
+                            <li><strong>Adjust for Inflation:</strong> Post-Tax Value ÷ (1 + Inflation Rate)^Years</li>
+                            <li><strong>Calculate Real Annual Return:</strong> (Final Real Value ÷ Initial Investment)^(1/Years) - 1</li>
+                        </ol>
+                    </div>
+                    
+                    <p>This calculation gives you the true annual growth rate of your purchasing power, which is what actually matters for your financial well-being.</p>
+                </div>
+                
+                <div style="margin-bottom: 24px;">
+                    <h3>Understanding the Impact</h3>
+                    <p style="margin-bottom: 16px;">The impact of inflation and taxes can be dramatic:</p>
+                    
+                    <table class="example-table">
+                        <thead>
+                            <tr>
+                                <th>Example</th>
+                                <th>Calculation</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>12% Nominal Return</td>
+                                <td>Initial value: ₹100,000<br>After 10 years: ₹310,585</td>
+                                <td>+210.6% total growth</td>
+                            </tr>
+                            <tr>
+                                <td>After 10% Tax on Gains</td>
+                                <td>Tax: ₹21,058<br>Post-tax value: ₹289,526</td>
+                                <td>+189.5% total growth</td>
+                            </tr>
+                            <tr>
+                                <td>After 5.9% Inflation</td>
+                                <td>Real value: ₹163,203</td>
+                                <td>+63.2% total real growth<br>(5.02% annually)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <p>In this example, a 12% nominal return becomes just 5.02% in real terms after accounting for taxes and inflation – less than half the nominal rate!</p>
+                </div>
+                
+                <div>
+                    <h3>Implications for Investment Decisions</h3>
+                    <ul style="padding-left: 24px;">
+                        <li>Tax-advantaged investments (like PPF, EPF, or Sovereign Gold Bonds) can significantly outperform higher-yielding taxable investments in real terms.</li>
+                        <li>The real return, not the nominal return, should guide your asset allocation decisions.</li>
+                        <li>Diversification across asset classes with different tax treatments can optimize your after-tax returns.</li>
+                        <li>Long-term investing typically results in better real returns due to tax deferral benefits.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="notes">
+            <h3>Notes on Indian Assets:</h3>
+            <ul>
+                <li>Historical returns are approximate and based on 10-year averages where available</li>
+                <li>Tax rates may vary based on holding period (shown rates are for long-term holdings where applicable)</li>
+                <li>PPF, EPF, and SSY show 0% tax rate as they are tax-exempt at maturity</li>
+                <li>Sovereign Gold Bonds show 0% tax rate as they are tax-exempt if held to maturity</li>
+                <li>For debt instruments, higher tax rates reflect taxation at slab rates for interest income</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Asset class data including original and Indian assets with historical returns
+        const assetClasses = [
+            // Original assets from the image
+            { name: 'Mid-cap', taxRate: 10, nominalReturn: 19 },
+            { name: 'Small-cap', taxRate: 10, nominalReturn: 16 },
+            { name: 'Large-cap', taxRate: 10, nominalReturn: 13 },
+            { name: 'S&P 500', taxRate: 10, nominalReturn: 12 },
+            { name: 'G-sec', taxRate: 30, nominalReturn: 6 },
+            { name: 'T-Bill', taxRate: 30, nominalReturn: 5 },
+            { name: 'Corporate bond', taxRate: 30, nominalReturn: 6 },
+            { name: 'Gold', taxRate: 20, nominalReturn: 12 },
+            { name: 'Real estate', taxRate: 30, nominalReturn: 4 },
+            
+            // Indian assets with historical return data
+            { name: 'Nifty 50', taxRate: 10, nominalReturn: 12.5 },
+            { name: 'BSE Sensex', taxRate: 10, nominalReturn: 13.2 },
+            { name: 'Nifty Midcap 150', taxRate: 10, nominalReturn: 15.4 },
+            { name: 'Nifty Smallcap 250', taxRate: 10, nominalReturn: 14.8 },
+            { name: 'Indian Equity MF - Large Cap', taxRate: 10, nominalReturn: 12.0 },
+            { name: 'Indian Equity MF - Mid Cap', taxRate: 10, nominalReturn: 14.5 },
+            { name: 'Indian Equity MF - Small Cap', taxRate: 10, nominalReturn: 15.2 },
+            { name: 'Indian Debt MF - Long Term', taxRate: 20, nominalReturn: 8.0 },
+            { name: 'Indian Debt MF - Short Term', taxRate: 30, nominalReturn: 7.2 },
+            { name: 'Public Provident Fund (PPF)', taxRate: 0, nominalReturn: 7.1 },
+            { name: 'Employee Provident Fund (EPF)', taxRate: 0, nominalReturn: 8.15 },
+            { name: 'National Pension System (NPS)', taxRate: 10, nominalReturn: 9.0 },
+            { name: 'Sukanya Samriddhi Yojana (SSY)', taxRate: 0, nominalReturn: 8.0 },
+            { name: 'Fixed Deposit', taxRate: 30, nominalReturn: 6.5 },
+            { name: 'Post Office Schemes', taxRate: 30, nominalReturn: 7.0 },
+            { name: 'National Savings Certificate (NSC)', taxRate: 30, nominalReturn: 6.8 },
+            { name: 'Kisan Vikas Patra (KVP)', taxRate: 30, nominalReturn: 6.9 },
+            { name: 'Indian Real Estate', taxRate: 20, nominalReturn: 8.5 },
+            { name: 'Sovereign Gold Bond', taxRate: 0, nominalReturn: 9.0 },
+            { name: 'Custom', taxRate: 10, nominalReturn: 10 }
+        ];
+        
+        // Chart objects
+        let growthChart, breakdownChart, returnChart, comparisonChart;
+        
+        // Tab switching functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and content
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                document.getElementById(button.dataset.tab).classList.add('active');
+                
+                // If switching to visualizations tab, update charts
+                if (button.dataset.tab === 'visualizations') {
+                    updateCharts();
+                }
+            });
+        });
+        
+        // Populate asset class dropdowns
+        function populateAssetDropdowns() {
+            const assetSelect = document.getElementById('asset-class');
+            const comparisonSelect = document.getElementById('comparison-asset');
+            
+            // Clear existing options
+            assetSelect.innerHTML = '';
+            comparisonSelect.innerHTML = '<option value="">Select an asset</option>';
+            
+            // Add options for each asset class
+            assetClasses.forEach(asset => {
+                const option = document.createElement('option');
+                option.value = asset.name.toLowerCase();
+                option.textContent = asset.name;
+                assetSelect.appendChild(option.cloneNode(true));
+                comparisonSelect.appendChild(option);
+            });
+            
+            // Set default to Nifty 50
+            const defaultAsset = 'nifty 50';
+            assetSelect.value = defaultAsset;
+            
+            // Set initial values based on default asset
+            const asset = assetClasses.find(a => a.name.toLowerCase() === defaultAsset);
+            if (asset) {
+                document.getElementById('nominal-return').value = asset.nominalReturn;
+                document.getElementById('tax-rate').value = asset.taxRate;
+            }
+        }
+        
+        // Format numbers for display
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-IN').format(Math.round(parseFloat(num)));
+        }
+        
+        // Calculate real returns based on input values
+        function calculateReturns() {
+            // Get input values
+            const nominalReturn = parseFloat(document.getElementById('nominal-return').value) / 100;
+            const taxRate = parseFloat(document.getElementById('tax-rate').value) / 100;
+            const inflationRate = parseFloat(document.getElementById('inflation-rate').value) / 100;
+            const initialInvestment = parseFloat(document.getElementById('initial-investment').value);
+            const years = parseFloat(document.getElementById('years').value);
+            
+            // Calculate future nominal value (before tax)
+            const futureNominalValue = initialInvestment * Math.pow(1 + nominalReturn, years);
+            
+            // Calculate capital gains
+            const capitalGains = futureNominalValue - initialInvestment;
+            
+            // Calculate tax on gains
+            const taxAmount = capitalGains * taxRate;
+            
+            // Calculate post-tax future value
+            const postTaxFutureValue = futureNominalValue - taxAmount;
+            
+            // Calculate inflation impact
+            const inflationImpact = postTaxFutureValue - (postTaxFutureValue / Math.pow(1 + inflationRate, years));
+            
+            // Calculate real future value (post-tax and inflation-adjusted)
+            const realFutureValue = postTaxFutureValue / Math.pow(1 + inflationRate, years);
+            
+            // Calculate annualized real return
+            const annualizedRealReturn = Math.pow(realFutureValue / initialInvestment, 1 / years) - 1;
+            
+            // Update result displays
+            document.getElementById('real-return').textContent = (annualizedRealReturn * 100).toFixed(2) + '%';
+            document.getElementById('init-investment-display').textContent = '₹' + formatNumber(initialInvestment);
+            document.getElementById('nominal-value').textContent = '₹' + formatNumber(futureNominalValue);
+            document.getElementById('tax-paid').textContent = '-₹' + formatNumber(taxAmount);
+            document.getElementById('post-tax-value').textContent = '₹' + formatNumber(postTaxFutureValue);
+            document.getElementById('inflation-impact').textContent = '-₹' + formatNumber(inflationImpact);
+            document.getElementById('real-value').textContent = '₹' + formatNumber(realFutureValue);
+            
+            return {
+                nominalReturn: nominalReturn * 100,
+                taxRate: taxRate * 100,
+                inflationRate: inflationRate * 100,
+                initialInvestment,
+                years,
+                futureNominalValue,
+                taxAmount,
+                postTaxFutureValue,
+                inflationImpact,
+                realFutureValue,
+                annualizedRealReturn: annualizedRealReturn * 100
+            };
+        }
+        
+        // Generate year-by-year data for growth chart
+        function generateYearData() {
+            const nominalReturn = parseFloat(document.getElementById('nominal-return').value) / 100;
+            const taxRate = parseFloat(document.getElementById('tax-rate').value) / 100;
+            const inflationRate = parseFloat(document.getElementById('inflation-rate').value) / 100;
+            const initialInvestment = parseFloat(document.getElementById('initial-investment').value);
+            const years = parseFloat(document.getElementById('years').value);
+            
+            const yearLabels = [];
+            const nominalValues = [];
+            const postTaxValues = [];
+            const realValues = [];
+            
+            for (let year = 0; year <= years; year++) {
+                yearLabels.push('Year ' + year);
+                
+                const nominalValueAtYear = initialInvestment * Math.pow(1 + nominalReturn, year);
+                const gainsAtYear = nominalValueAtYear - initialInvestment;
+                const taxAtYear = gainsAtYear * taxRate;
+                const postTaxValueAtYear = nominalValueAtYear - taxAtYear;
+                const realValueAtYear = postTaxValueAtYear / Math.pow(1 + inflationRate, year);
+                
+                nominalValues.push(Math.round(nominalValueAtYear));
+                postTaxValues.push(Math.round(postTaxValueAtYear));
+                realValues.push(Math.round(realValueAtYear));
+            }
+            
+            return {
+                labels: yearLabels,
+                datasets: [
+                    {
+                        label: 'Nominal Value',
+                        data: nominalValues,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Post-Tax Value',
+                        data: postTaxValues,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Real Value',
+                        data: realValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }
+                ]
+            };
+        }
+        
+        // Generate breakdown data for pie chart
+        function generateBreakdownData() {
+            const results = calculateReturns();
+            const netGain = results.realFutureValue - results.initialInvestment;
+            
+            return {
+                labels: ['Initial Investment', 'Net Gain', 'Tax Paid', 'Inflation Impact'],
+                datasets: [{
+                    data: [
+                        results.initialInvestment,
+                        Math.max(0, netGain),
+                        results.taxAmount,
+                        results.inflationImpact
+                    ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(255, 159, 64, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+        }
+        
+        // Generate data for return breakdown chart
+        function generateReturnData() {
+            const results = calculateReturns();
+            
+            return {
+                labels: ['Nominal Return', 'After Tax', 'Real Return'],
+                datasets: [{
+                    label: 'Return %',
+                    data: [
+                        results.nominalReturn,
+                        results.nominalReturn * (1 - results.taxRate/100),
+                        results.annualizedRealReturn
+                    ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 99, 132, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+        }
+        
+        // Initialize charts
+        function initCharts() {
+            // Growth chart
+            const growthCtx = document.getElementById('growth-chart').getContext('2d');
+            growthChart = new Chart(growthCtx, {
+                type: 'line',
+                data: generateYearData(),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString('en-IN', { 
+                                        notation: 'compact', 
+                                        compactDisplay: 'short' 
+                                    });
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ₹' + context.raw.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Breakdown chart
+            const breakdownCtx = document.getElementById('breakdown-chart').getContext('2d');
+            breakdownChart = new Chart(breakdownCtx, {
+                type: 'pie',
+                data: generateBreakdownData(),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const percentage = context.parsed || 0;
+                                    return label + ': ₹' + value.toLocaleString('en-IN') + 
+                                           ' (' + Math.round(percentage / context.dataset.data.reduce((a, b) => a + b, 0) * 100) + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Return chart
+            const returnCtx = document.getElementById('return-chart').getContext('2d');
+            returnChart = new Chart(returnCtx, {
+                type: 'bar',
+                data: generateReturnData(),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Return %'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Comparison chart (initialize empty)
+            const comparisonCtx = document.getElementById('comparison-chart').getContext('2d');
+            comparisonChart = new Chart(comparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Current Asset', 'Comparison Asset'],
+                    datasets: [{
+                        label: 'Real Return %',
+                        data: [0, 0],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(75, 192, 192, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Real Return %'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update charts with current data
+        function updateCharts() {
+            if (growthChart) {
+                growthChart.data = generateYearData();
+                growthChart.update();
+            }
+            
+            if (breakdownChart) {
+                breakdownChart.data = generateBreakdownData();
+                breakdownChart.update();
+            }
+            
+            if (returnChart) {
+                returnChart.data = generateReturnData();
+                returnChart.update();
+            }
+        }
+        
+        // Handle asset class change
+        document.getElementById('asset-class').addEventListener('change', function(e) {
+            const selectedAsset = assetClasses.find(asset => 
+                asset.name.toLowerCase() === e.target.value.toLowerCase());
+                
+            if (selectedAsset && e.target.value.toLowerCase() !== 'custom') {
+                document.getElementById('nominal-return').value = selectedAsset.nominalReturn;
+                document.getElementById('tax-rate').value = selectedAsset.taxRate;
+            }
+            
+            calculateReturns();
+        });
+        
+        // Handle input changes
+        const inputIds = ['nominal-return', 'tax-rate', 'inflation-rate', 'initial-investment', 'years'];
+        inputIds.forEach(id => {
+            document.getElementById(id).addEventListener('change', calculateReturns);
+            document.getElementById(id).addEventListener('input', calculateReturns);
+        });
+        
+        // Handle comparison
+        document.getElementById('compare-button').addEventListener('click', function() {
+            const comparisonAsset = document.getElementById('comparison-asset').value;
+            if (!comparisonAsset) return;
+            
+            const currentAsset = document.getElementById('asset-class').value;
+            const currentResults = calculateReturns();
+            
+            // Calculate comparison asset results
+            const selectedAsset = assetClasses.find(asset => 
+                asset.name.toLowerCase() === comparisonAsset.toLowerCase());
+                
+            if (selectedAsset) {
+                // Store current values
+                const currentNominalReturn = document.getElementById('nominal-return').value;
+                const currentTaxRate = document.getElementById('tax-rate').value;
+                
+                // Set comparison values
+                document.getElementById('nominal-return').value = selectedAsset.nominalReturn;
+                document.getElementById('tax-rate').value = selectedAsset.taxRate;
+                
+                // Calculate with comparison values
+                const comparisonResults = calculateReturns();
+                
+                // Reset to original values
+                document.getElementById('nominal-return').value = currentNominalReturn;
+                document.getElementById('tax-rate').value = currentTaxRate;
+                calculateReturns(); // Recalculate with original values
+                
+                // Show comparison results
+                document.getElementById('comparison-results').style.display = 'block';
+                
+                // Update table headers
+                document.getElementById('current-asset-name').textContent = 
+                    assetClasses.find(asset => asset.name.toLowerCase() === currentAsset.toLowerCase()).name + ' (Current)';
+                document.getElementById('comparison-asset-name').textContent = selectedAsset.name;
+                
+                // Update table values
+                document.getElementById('current-nominal').textContent = currentResults.nominalReturn.toFixed(2) + '%';
+                document.getElementById('comparison-nominal').textContent = selectedAsset.nominalReturn + '%';
+                document.getElementById('nominal-diff').textContent = 
+                    (selectedAsset.nominalReturn - currentResults.nominalReturn).toFixed(2) + '%';
+                
+                document.getElementById('current-tax').textContent = currentResults.taxRate.toFixed(2) + '%';
+                document.getElementById('comparison-tax').textContent = selectedAsset.taxRate + '%';
+                document.getElementById('tax-diff').textContent = 
+                    (selectedAsset.taxRate - currentResults.taxRate).toFixed(2) + '%';
+                
+                document.getElementById('current-real').textContent = currentResults.annualizedRealReturn.toFixed(2) + '%';
+                document.getElementById('comparison-real').textContent = comparisonResults.annualizedRealReturn.toFixed(2) + '%';
+                
+                const realDiff = comparisonResults.annualizedRealReturn - currentResults.annualizedRealReturn;
+                document.getElementById('real-diff').textContent = realDiff.toFixed(2) + '%';
+                document.getElementById('real-diff').className = realDiff > 0 ? 'positive' : 'negative';
+                
+                document.getElementById('current-real-value').textContent = '₹' + formatNumber(currentResults.realFutureValue);
+                document.getElementById('comparison-real-value').textContent = '₹' + formatNumber(comparisonResults.realFutureValue);
+                
+                const realValueDiff = comparisonResults.realFutureValue - currentResults.realFutureValue;
+                document.getElementById('real-value-diff').textContent = '₹' + formatNumber(realValueDiff);
+                document.getElementById('real-value-diff').className = realValueDiff > 0 ? 'positive' : 'negative';
+                
+                // Update comparison chart
+                comparisonChart.data.labels = [
+                    assetClasses.find(asset => asset.name.toLowerCase() === currentAsset.toLowerCase()).name,
+                    selectedAsset.name
+                ];
+                comparisonChart.data.datasets[0].data = [
+                    currentResults.annualizedRealReturn,
+                    comparisonResults.annualizedRealReturn
+                ];
+                comparisonChart.update();
+            }
+        });
+        
+        // Initialize the calculator
+        function init() {
+            populateAssetDropdowns();
+            calculateReturns();
+            initCharts();
+        }
+        
+        // Run initialization when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
